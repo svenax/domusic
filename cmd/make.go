@@ -30,6 +30,13 @@ var makeCmd = &cobra.Command{
 			}
 		}
 	},
+	PreRun: func(cmd *cobra.Command, args []string) {
+		if p, _ := cmd.Flags().GetBool("post"); p {
+			cmd.Flags().Set("type", "png")
+			cmd.Flags().Set("root", "true")
+			cmd.Flags().Set("crop", "true")
+		}
+	},
 }
 
 func init() {
@@ -41,6 +48,7 @@ func init() {
 	makeCmd.Flags().StringP("type", "t", "pdf", "save output as {type}")
 	makeCmd.Flags().BoolP("landscape", "l", false, "use landscape paper orientation")
 	makeCmd.Flags().BoolP("keep", "k", false, "Keep generated files for debugging")
+	makeCmd.Flags().BoolP("post", "", false, "Generate a png for posting to social media")
 	makeCmd.Flags().BoolP("root", "", false, "save result in project root")
 	makeCmd.Flags().BoolP("crop", "", false, "crop page to minimal size")
 	makeCmd.Flags().BoolP("point-and-click", "", false, "Turn on point-and-click")
