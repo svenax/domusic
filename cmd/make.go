@@ -40,6 +40,7 @@ func init() {
 	makeCmd.Flags().StringP("format", "f", "default", "use header format file header_{format}")
 	makeCmd.Flags().StringP("type", "t", "pdf", "save output as {type}")
 	makeCmd.Flags().BoolP("landscape", "l", false, "use landscape paper orientation")
+	makeCmd.Flags().BoolP("keep", "k", false, "Keep generated files for debugging")
 	makeCmd.Flags().BoolP("root", "", false, "save result in project root")
 	makeCmd.Flags().BoolP("crop", "", false, "crop page to minimal size")
 	makeCmd.Flags().BoolP("point-and-click", "", false, "Turn on point-and-click")
@@ -104,6 +105,10 @@ func (m *maker) run(src string) error {
 		c := exec.Command(e, append(ea, logFile)...)
 		c.Run()
 		return err
+	}
+
+	if m.flagBool("keep") {
+		return nil
 	}
 
 	fmt.Println("  * Cleaning up")
