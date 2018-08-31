@@ -1,5 +1,3 @@
-// Copyright © 2018 Sven Axelsson <himself@svenax.net>
-
 package cmd
 
 import (
@@ -47,12 +45,12 @@ func init() {
 	makeCmd.Flags().StringP("format", "f", "default", "use header format file header_{format}")
 	makeCmd.Flags().StringP("type", "t", "pdf", "save output as {type}")
 	makeCmd.Flags().BoolP("landscape", "l", false, "use landscape paper orientation")
-	makeCmd.Flags().BoolP("keep", "k", false, "Keep generated files for debugging")
-	makeCmd.Flags().BoolP("post", "", false, "Generate a png for posting to social media")
+	makeCmd.Flags().BoolP("keep", "k", false, "keep generated files for debugging")
+	makeCmd.Flags().BoolP("post", "", false, "generate a png for posting to social media")
 	makeCmd.Flags().BoolP("root", "", false, "save result in project root")
 	makeCmd.Flags().BoolP("crop", "", false, "crop page to minimal size")
-	makeCmd.Flags().BoolP("point-and-click", "", false, "Turn on point-and-click")
-	makeCmd.Flags().BoolP("view-spacing", "", false, "Turn on Paper.annotatespacing")
+	makeCmd.Flags().BoolP("point-and-click", "", false, "turn on point-and-click")
+	makeCmd.Flags().BoolP("view-spacing", "", false, "turn on Paper.annotatespacing")
 
 	lyMaker = &maker{makeCmd}
 }
