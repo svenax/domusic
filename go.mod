@@ -3,6 +3,7 @@ module github.com/svenax/domusic
 require (
 	github.com/BurntSushi/toml v0.3.0 // indirect
 	github.com/fsnotify/fsnotify v1.4.7 // indirect
+	github.com/grokify/html-strip-tags-go v0.0.0-20180530080503-3f8856873ce5
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/magiconair/properties v1.8.0 // indirect
