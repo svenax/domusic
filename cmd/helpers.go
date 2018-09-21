@@ -79,6 +79,15 @@ func getViewer() (string, []string, error) {
 	return "", []string{}, errors.New("no PDF viewer set")
 }
 
+// getNotebook returns the Evernote notebook set in the configuration file or
+// exported from the shell.
+func getNotebook() (string, error) {
+	if viper.IsSet("en-notebook") {
+		return viper.GetString("en-notebook"), nil
+	}
+	return "", errors.New("no notebook set")
+}
+
 // executeTemplate takes a text template and a data map, and returns the
 // text with the data inserted.
 func executeTemplate(tmplString string, data interface{}) (string, error) {

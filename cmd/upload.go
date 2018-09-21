@@ -47,7 +47,11 @@ var uploadCmd = &cobra.Command{
 			}
 
 			fmt.Println("Creating:", title, "in", tag)
-			out, err := run("create", "--title", title,
+			notebook, err := getNotebook()
+			if err != nil {
+				errExit(err)
+			}
+			out, err := run("create", "--notebook", notebook, "--title", title,
 				"--content", "", "--resource", file, "--tag", tag)
 			if err != nil {
 				errExit(out)
