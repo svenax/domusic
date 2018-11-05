@@ -16,9 +16,8 @@ var rootCmd = &cobra.Command{
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-	if err := rootCmd.Execute(); err != nil {
-		errExit(err)
-	}
+	err := rootCmd.Execute()
+	errExit(err)
 }
 
 func init() {
@@ -32,9 +31,7 @@ func initConfig() {
 		viper.SetConfigFile(cfgFile)
 	} else {
 		home, err := homedir.Dir()
-		if err != nil {
-			errExit(err)
-		}
+		errExit(err)
 
 		viper.AddConfigPath(home)
 		viper.SetConfigName(".domusic")
@@ -42,7 +39,6 @@ func initConfig() {
 
 	viper.AutomaticEnv()
 
-	if err := viper.ReadInConfig(); err != nil {
-		errExit(err)
-	}
+	err := viper.ReadInConfig()
+	errExit(err)
 }

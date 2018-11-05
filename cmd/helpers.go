@@ -5,50 +5,58 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	pth "path"
+	"path"
 	"strings"
 	"text/template"
 
 	"github.com/spf13/viper"
 )
 
-// errExit prints an error message and then exits.
-func errExit(msg interface{}) {
+// msgExit prints an error message and exits.
+func msgExit(msg string) {
 	fmt.Fprintln(os.Stderr, "Error:", msg)
 	os.Exit(1)
 }
 
+// errExit prints an error message and exits if err is not nil.
+func errExit(err error) {
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}
+
 // getSourcePath returns the full path to a Lilypond file in the music
 // hierarchy. It does not check if the file exists.
-func getSourcePath(path string) string {
-	return ensureSuffix(pathFromRoot(makeRel(path)), ".ly")
+func getSourcePath(p string) string {
+	return ensureSuffix(pathFromRoot(makeRel(p)), ".ly")
 }
 
 // getTemplatePath returns the full path to a generated template file in
 // the root directory of the music hierarchy.
-func getTemplatePath(path string) string {
-	return ensureSuffix(pathFromRoot("__"+noExt(pth.Base(path))), ".ly")
+func getTemplatePath(p string) string {
+	return ensureSuffix(pathFromRoot("__"+noExt(path.Base(p))), ".ly")
 }
 
 // getPdfPath returns the full path to where the PDF file for a given tune
 // should be stored.
-func getPdfPath(path string) string {
-	return ensureSuffix(pathFromRoot("_output", noExt(makeRel(path))), ".pdf")
+func getPdfPath(p string) string {
+	return ensureSuffix(pathFromRoot("_output", noExt(makeRel(p))), ".pdf")
 }
 
 // getPreviewPath returns the full path to where the preview file for a given
 // tune should be stored.
-func getPreviewPath(path string) string {
-	return ensureSuffix(pathFromRoot("_output", noExt(makeRel(path))), ".preview.png")
+func getPreviewPath(p string) string {
+	return ensureSuffix(pathFromRoot("_output", noExt(makeRel(p))), ".preview.png")
 }
 
 // getOutputPath returns the full path to either preview or PDF file depending
 // on the flag {preview}.
-func getOutputPath(path string, preview bool) string {
+func getOutputPath(p string, preview bool) string {
 	if preview {
-		return getPreviewPath(path)
+		return getPreviewPath(p)
 	}
-	return getPdfPath(path)
+	return getPdfPath(p)
 }
 
 // getEditor returns the editor set in the configuration file or exported from
@@ -102,35 +110,34 @@ func executeTemplate(tmplString string, data interface{}) (string, error) {
 }
 
 // ensureSuffix ensures the given path ends with {suffix}.
-func ensureSuffix(path string, suffix string) string {
-	return strings.TrimSuffix(path, suffix) + suffix
+func ensureSuffix(p string, suffix string) string {
+	return strings.TrimSuffix(p, suffix) + suffix
 }
 
 // noExt strips all extensions from the given path.
 // E.g. given '/a/b.c.d' it will return '/a/b'.
-func noExt(path string) string {
-	dir := pth.Dir(path)
-	base := pth.Base(path)
+func noExt(p string) string {
+	dir, base := path.Split(p)
 	if i := strings.Index(base, "."); i > 0 {
 		base = base[:i]
 	}
 
-	return pth.Join(dir, base)
+	return path.Join(dir, base)
 }
 
 // makeRel returns a relative path from the music root. If the path is not
 // actually within the music root, it will be returned as is.
-func makeRel(path string) string {
-	return strings.TrimPrefix(path, ensureSuffix(viper.GetString("root"), "/"))
+func makeRel(p string) string {
+	return strings.TrimPrefix(p, ensureSuffix(viper.GetString("root"), "/"))
 }
 
 // pathFromRoot returns an absolute path starting with music root and then
 // all the given parts. If the given path is already absolute, it is returned
 // as is.
 func pathFromRoot(parts ...string) string {
-	fullPath := pth.Join(parts...)
-	if !pth.IsAbs(fullPath) {
-		fullPath = pth.Join(viper.GetString("root"), fullPath)
+	fullPath := path.Join(parts...)
+	if !path.IsAbs(fullPath) {
+		fullPath = path.Join(viper.GetString("root"), fullPath)
 	}
 
 	return fullPath

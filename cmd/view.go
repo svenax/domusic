@@ -14,7 +14,7 @@ var viewCmd = &cobra.Command{
 	Short: "View PDF or preview image",
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) != 1 {
-			errExit("view needs a file name")
+			msgExit("view needs a file name")
 		}
 
 		file := getOutputPath(args[0], preview)
@@ -23,10 +23,8 @@ var viewCmd = &cobra.Command{
 		}
 
 		v, _, err := getViewer()
-		if err != nil {
-			errExit(err)
-		}
-		c := exec.Command("open", "-a", v, file)
+		errExit(err)
+		c := exec.Command("open", "-b", v, file)
 		c.Run()
 	},
 }

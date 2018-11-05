@@ -208,13 +208,9 @@ func (m *maker) makeTemplateFile(sourceFile string, minimal bool) (string, error
 	}
 
 	header, err := executeTemplate(fileHeader, data)
-	if err != nil {
-		errExit(err)
-	}
+	errExit(err)
 	source, err := ioutil.ReadFile(sourceFile)
-	if err != nil {
-		errExit(err)
-	}
+	errExit(err)
 
 	sourceFile = ensureSuffix(noExt(sourceFile), ".ly")
 	templatePath := getTemplatePath(sourceFile)
