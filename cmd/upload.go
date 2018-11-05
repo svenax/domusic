@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -25,55 +26,17 @@ var uploadCmd = &cobra.Command{
 	Use:   "upload file",
 	Short: "Upload and/or update file to Evernote",
 	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) != 1 {
-			errExit("upload needs a file name")
-		}
-
-		file := getOutputPath(args[0], false)
-		if _, err := os.Stat(file); err != nil {
-			errExit(err)
-		}
-
-		title := humanize(strings.TrimSuffix(path.Base(file), path.Ext(file)))
-		tag := tagify(path.Base(path.Dir(file)))
-
-		out, err := run("find", "--exact-entry", "--guid", "--search", title)
-		outlines := strings.Split(strings.Trim(out, "\n"), "\n")
-		outlast := outlines[len(outlines)-1]
-
-		if err != nil {
-			if strings.Contains(outlast, "Rate Limit") {
-				errExit(outlast)
+		for _, arg := range args {
+			files := []string{arg}
+			if strings.Contains(arg, "*") {
+				files, _ = filepath.Glob(pathFromRoot(arg))
 			}
-
-			fmt.Println("Creating:", title, "in", tag)
-			notebook, err := getNotebook()
-			if err != nil {
-				errExit(err)
-			}
-			out, err := run("create", "--notebook", notebook, "--title", title,
-				"--content", "", "--resource", file, "--tag", tag)
-			if err != nil {
-				errExit(out)
-			}
-		} else {
-			fmt.Println("Updating:", title, "in", tag)
-			guid := strings.Split(outlast, " ")[0]
-			out, err := run("show", "--note", guid)
-			if err != nil {
-				fmt.Println(err)
-			}
-
-			rx := regexp.MustCompile("(?s)CONTENT -+\nTags: [^\n]*\n(.*)")
-			content := rx.FindStringSubmatch(out)[1]
-			if content != "" {
-				content = strings.Trim(strip.StripTags(content), " \n")
-			}
-
-			_, err = run("edit", "--note", guid,
-				"--content", content, "--resource", file)
-			if err != nil {
-				errExit(err)
+			for _, f := range files {
+				f = getOutputPath(f, false)
+				if _, err := os.Stat(f); err != nil {
+					errExit(err)
+				}
+				run(f)
 			}
 		}
 	},
@@ -85,7 +48,48 @@ func init() {
 	uploadCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "show all command output")
 }
 
-func run(args ...string) (string, error) {
+func run(file string) {
+	title := humanize(strings.TrimSuffix(path.Base(file), path.Ext(file)))
+	tag := tagify(path.Base(path.Dir(file)))
+
+	out, err := upload("find", "--exact-entry", "--guid", "--search", title)
+	outlines := strings.Split(strings.Trim(out, "\n"), "\n")
+	outlast := outlines[len(outlines)-1]
+
+	if err != nil {
+		if strings.Contains(outlast, "Rate Limit") {
+			msgExit(outlast)
+		}
+
+		fmt.Println("Creating:", title, "in", tag)
+		notebook, err := getNotebook()
+		errExit(err)
+		out, err = upload("create", "--notebook", notebook, "--title", title,
+			"--content", "", "--resource", file, "--tag", tag)
+		if err != nil {
+			msgExit(out)
+		}
+	} else {
+		fmt.Println("Updating:", title, "in", tag)
+		guid := strings.Split(outlast, " ")[0]
+		out, err := upload("show", "--note", guid)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		rx := regexp.MustCompile("(?s)CONTENT -+\nTags: [^\n]*\n(.*)")
+		content := rx.FindStringSubmatch(out)[1]
+		if content != "" {
+			content = strings.Trim(strip.StripTags(content), " \n")
+		}
+
+		_, err = upload("edit", "--note", guid,
+			"--content", content, "--resource", file)
+		errExit(err)
+	}
+}
+
+func upload(args ...string) (string, error) {
 	if verbose {
 		fmt.Println("CMD: geeknote", strings.Join(args, " "))
 	}
@@ -110,6 +114,7 @@ func humanize(text string) string {
 }
 
 func tagify(tag string) string {
+	tag = strings.TrimPrefix(tag, "!")
 	tag = strings.Replace(tag, "-", "/", -1)
 	tag = strings.Replace(tag, "_", " ", -1)
 	if strings.HasSuffix(tag, "pes") || strings.HasSuffix(tag, "tes") {
