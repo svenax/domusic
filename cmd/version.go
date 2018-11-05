@@ -10,7 +10,7 @@ import (
 )
 
 // version is the current version of this program.
-const version = "1.3.0"
+const version = "1.4.1"
 
 var versionCmd = &cobra.Command{
 	Use:   "version",

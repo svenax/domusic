@@ -1,8 +1,18 @@
+<!-- markdownlint-disable MD022 MD024 MD032 -->
+
 # Changelog
 All notable changes to this project are documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
+
+## [1.4.1] - 2018-11-05
+### Changed
+- `upload` can now take multiple files and wildcards in the same way as `collection` and `make`.
+
+## [1.4.0] - 2018-11-03
+### Added
+- New command `collection` that generates a .ly file with all the files given as argument.
 
 ## [1.3.0] - 2018-09-04
 ### Added
