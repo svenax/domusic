@@ -51,8 +51,11 @@ func init() {
 func run(file string) {
 	title := humanize(strings.TrimSuffix(path.Base(file), path.Ext(file)))
 	tag := tagify(path.Base(path.Dir(file)))
+	notebook, err := getNotebook()
+	errExit(err)
 
-	out, err := upload("find", "--exact-entry", "--guid", "--search", title)
+	out, err := upload("find", "--exact-entry", "--guid", "--search", title,
+		"--notebook", notebook)
 	outlines := strings.Split(strings.Trim(out, "\n"), "\n")
 	outlast := outlines[len(outlines)-1]
 
@@ -62,8 +65,6 @@ func run(file string) {
 		}
 
 		fmt.Println("Creating:", title, "in", tag)
-		notebook, err := getNotebook()
-		errExit(err)
 		out, err = upload("create", "--notebook", notebook, "--title", title,
 			"--content", "", "--resource", file, "--tag", tag)
 		if err != nil {
