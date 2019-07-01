@@ -106,6 +106,7 @@ func (m *maker) run(src string) error {
 	templateFile := getTemplatePath(src)
 
 	if err != nil {
+		fmt.Println("  * Opening log file")
 		e, ea, _ := getEditor()
 		logFile := strings.TrimSuffix(templateFile, ".ly") + ".log"
 		c := exec.Command(e, append(ea, logFile)...)
@@ -158,8 +159,6 @@ func (m *maker) png(src string) error {
 }
 
 func (m *maker) runLilypond(src string, args []string, minimal bool) error {
-	var err error
-
 	if src != "" {
 		tp, err := m.makeTemplateFile(src, minimal)
 		if err != nil {
@@ -171,12 +170,11 @@ func (m *maker) runLilypond(src string, args []string, minimal bool) error {
 		c := exec.Command("lilypond", args...)
 		errOut, err := c.CombinedOutput()
 		ioutil.WriteFile(tpBase+".log", errOut, 0644)
-	} else {
-		c := exec.Command("lilypond", args...)
-		err = c.Run()
+		return err
 	}
+	c := exec.Command("lilypond", args...)
 
-	return err
+	return c.Run()
 }
 
 func (m *maker) crop(src string) error {
