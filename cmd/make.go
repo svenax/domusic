@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var lyMaker *maker
@@ -51,6 +52,8 @@ func init() {
 	makeCmd.Flags().BoolP("crop", "", false, "crop page to minimal size")
 	makeCmd.Flags().BoolP("point-and-click", "", false, "turn on point-and-click")
 	makeCmd.Flags().BoolP("view-spacing", "", false, "turn on Paper.annotatespacing")
+	makeCmd.Flags().StringP("font-include", "", "", "include font configuration file")
+	viper.BindPFlag("font-include", makeCmd.Flags().Lookup("font-include"))
 
 	lyMaker = &maker{makeCmd}
 }
@@ -64,6 +67,7 @@ const fileHeader = `%% Generated from {{.sourceFile}} by domusic
 #(set-global-staff-size {{.staffSize}})
 #(set-default-paper-size "{{.paperSize}}" '{{if .landscape}}landscape{{else}}portrait{{end}})
 
+{{if .fontInclude}}\include "{{.fontInclude}}.ily"{{end}}
 \include "./bagpipe_new.ly"
 \include "./bagpipe_extra.ly"
 \include "./header_{{.headerFormat}}.ly"
@@ -203,6 +207,7 @@ func (m *maker) makeTemplateFile(sourceFile string, minimal bool) (string, error
 		"headerFormat":  format,
 		"viewSpacing":   m.flagBool("view-spacing"),
 		"removeTagline": m.flagBool("crop"),
+		"fontInclude":   viper.GetString("font-include"),
 	}
 
 	header, err := executeTemplate(fileHeader, data)
