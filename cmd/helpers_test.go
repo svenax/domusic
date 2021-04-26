@@ -217,7 +217,9 @@ func Test_ensureSuffix(t *testing.T) {
 		args args
 		want string
 	}{
-		// TODO: Add test cases.
+		{"PlainNoSuffix", args{"a", ""}, "a"},
+		{"PlainSuffix", args{"a", ".x"}, "a.x"},
+		{"PlainHasSuffix", args{"a.x", "x"}, "a.x"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
