@@ -34,6 +34,9 @@ var makeCmd = &cobra.Command{
 			cmd.Flags().Set("type", "png")
 			cmd.Flags().Set("root", "true")
 			cmd.Flags().Set("crop", "true")
+			if !cmd.Flags().Changed("resolution") {
+				cmd.Flags().Set("resolution", "84")
+			}
 		}
 	},
 }
@@ -41,6 +44,7 @@ var makeCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(makeCmd)
 
+	makeCmd.Flags().IntP("resolution", "r", 144, "resolution for PNG files")
 	makeCmd.Flags().IntP("staff-size", "s", 15, "staff size")
 	makeCmd.Flags().StringP("paper-size", "p", "a4", "paper size")
 	makeCmd.Flags().StringP("format", "f", "default", "use header format file header_{format}")
@@ -97,14 +101,14 @@ func (m *maker) run(src string) error {
 	fmt.Println("Processing file", src)
 	if m.flagString("type") == "pdf" {
 		fmt.Println("  * Creating preview file")
-		err = lyMaker.preview(src)
+		err = lyMaker.preview(src, m.flagInt("resolution"))
 		if err == nil {
 			fmt.Println("  * Creating PDF file")
 			err = lyMaker.pdf(src)
 		}
 	} else {
 		fmt.Println("  * Creating PNG file")
-		err = lyMaker.png(src)
+		err = lyMaker.png(src, m.flagInt("resolution"))
 	}
 
 	templateFile := getTemplatePath(src)
@@ -132,12 +136,12 @@ func (m *maker) run(src string) error {
 	return nil
 }
 
-func (m *maker) preview(src string) error {
+func (m *maker) preview(src string, resolution int) error {
 	lyArgs := []string{
 		"--png",
 		"-dpreview",
 		"-dno-print-pages",
-		"-dresolution=84",
+		fmt.Sprintf("-dresolution=%d", resolution),
 		"-dpreview-include-book-title",
 		"-dwithout-comment",
 	}
@@ -153,10 +157,10 @@ func (m *maker) pdf(src string) error {
 	return m.runLilypond(src, lyArgs, false)
 }
 
-func (m *maker) png(src string) error {
+func (m *maker) png(src string, resolution int) error {
 	lyArgs := []string{
 		"--png",
-		"-dresolution=144",
+		fmt.Sprintf("-dresolution=%d", resolution),
 	}
 
 	return m.runLilypond(src, lyArgs, false)
@@ -199,7 +203,7 @@ func (m *maker) makeTemplateFile(sourceFile string, minimal bool) (string, error
 	}
 	data := map[string]interface{}{
 		"sourceFile":    sourceFile,
-		"version":       "2.18.0",
+		"version":       "2.20.0",
 		"pointAndClick": m.flagBool("point-and-click"),
 		"staffSize":     m.flagInt("staff-size"),
 		"paperSize":     m.flagString("paper-size"),
