@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -44,24 +45,32 @@ var collectionCmd = &cobra.Command{
 			"title": title,
 		}
 
-		header, err := executeTemplate(collectionHeader, data)
+		template, err := executeTemplate(collectionHeader, data)
 		errExit(err)
 
+		files := []string{}
 		for _, arg := range args {
-			files := []string{arg}
 			if strings.Contains(arg, "*") {
-				files, _ = filepath.Glob(pathFromRoot(arg))
-			}
-			for _, f := range files {
-				fd, err := ioutil.ReadFile(getSourcePath(f))
-				errExit(err)
-				title := titleRx.FindSubmatch(fd)[1]
-				header += fmt.Sprintf("\\tocItem \\markup \"%s\"\n", title)
-				header += fmt.Sprintf("\\include \"%s\"\n\n", f)
+				f, _ := filepath.Glob(pathFromRoot(arg))
+				files = append(files, f...)
+			} else {
+				files = append(files, arg)
 			}
 		}
 
-		fmt.Println(header)
+		sort.Slice(files, func(i, j int) bool {
+			return pathForSort(files[i]) < pathForSort(files[j])
+		})
+
+		for _, f := range files {
+			fd, err := ioutil.ReadFile(getSourcePath(f))
+			errExit(err)
+			title := titleRx.FindSubmatch(fd)[1]
+			template += fmt.Sprintf("\\tocItem \\markup \"%s\"\n", title)
+			template += fmt.Sprintf("\\include \"%s\"\n\n", f)
+		}
+
+		fmt.Println(template)
 	},
 }
 
@@ -69,4 +78,8 @@ func init() {
 	rootCmd.AddCommand(collectionCmd)
 
 	collectionCmd.Flags().StringP("title", "t", "Collection", "collection title")
+}
+
+func pathForSort(path string) string {
+	return strings.Replace(filepath.Base(path), "!", "", -1)
 }

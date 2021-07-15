@@ -1,6 +1,9 @@
 package cmd
 
 import (
+	"fmt"
+	"runtime"
+
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -23,7 +26,12 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.domusic.yaml)")
+	filename := ".domusic.yaml"
+	if runtime.GOOS == "windows" {
+		filename = "domusic.ini"
+	}
+
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", fmt.Sprintf("config file (default is $HOME/%s)", filename))
 }
 
 func initConfig() {
@@ -34,7 +42,12 @@ func initConfig() {
 		errExit(err)
 
 		viper.AddConfigPath(home)
+
 		viper.SetConfigName(".domusic")
+
+		if runtime.GOOS == "windows" {
+			viper.SetConfigName("domusic")
+		}
 	}
 
 	viper.AutomaticEnv()
