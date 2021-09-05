@@ -72,7 +72,7 @@ const fileHeader = `%% Generated from {{.sourceFile}} by domusic
 #(set-default-paper-size "{{.paperSize}}" '{{if .landscape}}landscape{{else}}portrait{{end}})
 
 {{if .fontInclude}}\include "{{.fontInclude}}.ily"{{end}}
-\include "./bagpipe_new.ly"
+\include "bagpipe.ly"
 \include "./bagpipe_extra.ly"
 \include "./header_{{.headerFormat}}.ly"
 
@@ -203,7 +203,7 @@ func (m *maker) makeTemplateFile(sourceFile string, minimal bool) (string, error
 	}
 	data := map[string]interface{}{
 		"sourceFile":    sourceFile,
-		"version":       "2.20.0",
+		"version":       "2.22.0",
 		"pointAndClick": m.flagBool("point-and-click"),
 		"staffSize":     m.flagInt("staff-size"),
 		"paperSize":     m.flagString("paper-size"),
