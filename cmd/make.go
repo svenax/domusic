@@ -85,7 +85,7 @@ const fileHeader = `%% Generated from {{.sourceFile}} by domusic
 \layout {
   \context {
     \Score
-    \override NonMusicalPaperColumn #'line-break-permission = ##f
+    \override NonMusicalPaperColumn.line-break-permission = ##f
   }
 }
 
@@ -203,7 +203,7 @@ func (m *maker) makeTemplateFile(sourceFile string, minimal bool) (string, error
 	}
 	data := map[string]interface{}{
 		"sourceFile":    sourceFile,
-		"version":       "2.22.0",
+		"version":       "2.24.0",
 		"pointAndClick": m.flagBool("point-and-click"),
 		"staffSize":     m.flagInt("staff-size"),
 		"paperSize":     m.flagString("paper-size"),
