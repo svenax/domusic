@@ -4,13 +4,17 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path"
+	"regexp"
 	"strings"
 	"text/template"
 
 	"github.com/spf13/viper"
 )
+
+var titleRx = regexp.MustCompile("title\\s*=\\s*\"(.+)\"")
 
 // msgExit prints an error message and exits.
 func msgExit(msg string) {
@@ -141,4 +145,31 @@ func pathFromRoot(parts ...string) string {
 	}
 
 	return fullPath
+}
+
+// copyFile copies a file from src to dst. It returns the number of bytes
+// copied and an error status.
+func copyFile(src, dst string) (int64, error) {
+	sourceFileStat, err := os.Stat(src)
+	if err != nil {
+		return 0, err
+	}
+
+	if !sourceFileStat.Mode().IsRegular() {
+		return 0, fmt.Errorf("%s is not a regular file", src)
+	}
+
+	source, err := os.Open(src)
+	if err != nil {
+		return 0, err
+	}
+	defer source.Close()
+
+	destination, err := os.Create(dst)
+	if err != nil {
+		return 0, err
+	}
+	defer destination.Close()
+	nBytes, err := io.Copy(destination, source)
+	return nBytes, err
 }
