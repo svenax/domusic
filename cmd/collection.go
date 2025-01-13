@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -60,7 +60,7 @@ var collectionCmd = &cobra.Command{
 		})
 
 		for _, f := range files {
-			fd, err := ioutil.ReadFile(getSourcePath(f))
+			fd, err := os.ReadFile(getSourcePath(f))
 			errExit(err)
 			title := titleRx.FindSubmatch(fd)[1]
 			template += fmt.Sprintf("\\tocItem \\markup \"%s\"\n", title)

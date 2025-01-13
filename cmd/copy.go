@@ -54,7 +54,8 @@ func (c *copier) copy(src string) {
 	if matches == nil {
 		log.Printf("Skipping '%s'. No title field found", src)
 	} else {
-		target := filepath.Join(c.flagString("output"), string(matches[1])+".pdf")
+		name := strings.ReplaceAll(string(matches[1]), "/", "-")
+		target := filepath.Join(c.flagString("output"), name+".pdf")
 		if c.flagBool("dry-run") {
 			fmt.Printf("cp %s '%s'\n", getPdfPath(src), target)
 		} else {

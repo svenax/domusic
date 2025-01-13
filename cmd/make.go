@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -177,7 +176,7 @@ func (m *maker) runLilypond(src string, args []string, minimal bool) error {
 
 		c := exec.Command("lilypond", args...)
 		errOut, err := c.CombinedOutput()
-		ioutil.WriteFile(tpBase+".log", errOut, 0644)
+		os.WriteFile(tpBase+".log", errOut, 0644)
 		return err
 	}
 	c := exec.Command("lilypond", args...)
@@ -216,7 +215,7 @@ func (m *maker) makeTemplateFile(sourceFile string, minimal bool) (string, error
 
 	header, err := executeTemplate(fileHeader, data)
 	errExit(err)
-	source, err := ioutil.ReadFile(sourceFile)
+	source, err := os.ReadFile(sourceFile)
 	errExit(err)
 
 	sourceFile = ensureSuffix(noExt(sourceFile), ".ly")

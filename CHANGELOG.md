@@ -6,13 +6,22 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.7.1] - 2025-01-13
+### Changed
+- Use `os` instead of `io/ioutil`.
+- Update requirements.
+
+### Fixed
+- Update `Makefile` and `version.go` so the correct information is injected
+  at build time.
+
 ## [1.6.0] - 2023-03-12
 ### Added
 - Finished the `copy` command that copies and renames PDF files for Forscore.
 
 ## [1.5.1] - 2023-01-28
 ### Changed
-- Updated to Lilypond 2.24
+- Updated to Lilypond 2.24.
 
 ## [1.4.3] - 2020-01-12
 ### Fixed
