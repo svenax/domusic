@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 
@@ -19,13 +20,18 @@ var viewCmd = &cobra.Command{
 
 		file := getOutputPath(args[0], preview)
 		if _, err := os.Stat(file); err != nil {
+			if os.IsNotExist(err) {
+				msgExit(fmt.Sprintf("output file does not exist: %s", file))
+			}
 			errExit(err)
 		}
 
 		v, _, err := getViewer()
 		errExit(err)
 		c := exec.Command("open", "-b", v, file)
-		c.Run()
+		if err := c.Run(); err != nil {
+			errExit(fmt.Errorf("failed to open file with viewer '%s' for file '%s': %w", v, file, err))
+		}
 	},
 }
 

@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"os/exec"
 
 	"github.com/spf13/cobra"
@@ -18,7 +19,9 @@ var editCmd = &cobra.Command{
 		errExit(err)
 
 		c := exec.Command(e, append(ea, getSourcePath(args[0]))...)
-		c.Run()
+		if err := c.Run(); err != nil {
+			errExit(fmt.Errorf("failed to run editor '%s %v': %w", e, append(ea, getSourcePath(args[0])), err))
+		}
 	},
 }
 

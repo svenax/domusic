@@ -79,12 +79,12 @@ func getEditor() (string, []string, error) {
 	return "", []string{}, errors.New("no editor set")
 }
 
-// getViewer returns the editor set in the configuration file or exported from
-// the shell. It returns the editor name and an array of arguments so it can
+// getViewer returns the viewer set in the configuration file or exported from
+// the shell. It returns the viewer name and an array of arguments so it can
 // easily be slotted in to exec.Command.
 func getViewer() (string, []string, error) {
 	var cmds []string
-	if viper.IsSet("ly-editor") {
+	if viper.IsSet("ly-viewer") {
 		cmds = strings.Split(viper.GetString("ly-viewer"), " ")
 		return cmds[0], cmds[1:], nil
 	}

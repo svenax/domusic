@@ -62,7 +62,11 @@ var collectionCmd = &cobra.Command{
 		for _, f := range files {
 			fd, err := os.ReadFile(getSourcePath(f))
 			errExit(err)
-			title := titleRx.FindSubmatch(fd)[1]
+			matches := titleRx.FindSubmatch(fd)
+			if len(matches) < 2 {
+				msgExit(fmt.Sprintf("no title found in file: %s", f))
+			}
+			title := matches[1]
 			template += fmt.Sprintf("\\tocItem \\markup \"%s\"\n", title)
 			template += fmt.Sprintf("\\include \"%s\"\n\n", f)
 		}

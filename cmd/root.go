@@ -2,9 +2,9 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 	"runtime"
 
-	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -38,7 +38,7 @@ func initConfig() {
 	if cfgFile != "" {
 		viper.SetConfigFile(cfgFile)
 	} else {
-		home, err := homedir.Dir()
+		home, err := os.UserHomeDir()
 		errExit(err)
 
 		viper.AddConfigPath(home)

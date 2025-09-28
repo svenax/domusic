@@ -268,11 +268,12 @@ func (m *maker) flagString(name string) string {
 
 func cleanup(path string) {
 	base := strings.TrimSuffix(path, ".ly")
-	os.Remove(base + ".log")
-	os.Remove(base + ".ly")
-	os.Remove(base + ".preview.eps")
-	os.Remove(base + ".preview.pdf")
-	os.Remove(base + ".ps")
+	// Ignore errors for cleanup operations as files may not exist
+	_ = os.Remove(base + ".log")
+	_ = os.Remove(base + ".ly")
+	_ = os.Remove(base + ".preview.eps")
+	_ = os.Remove(base + ".preview.pdf")
+	_ = os.Remove(base + ".ps")
 }
 
 func moveFiles(from, to string) {
