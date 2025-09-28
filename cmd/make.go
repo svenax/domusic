@@ -278,6 +278,7 @@ func cleanup(path string) {
 
 func moveFiles(from, to string) {
 	fromBase := strings.TrimSuffix(from, ".ly")
+	os.MkdirAll(filepath.Dir(getPdfPath(to)), 0755) // Both files go in the same directory
 	os.Rename(fromBase+".pdf", getPdfPath(to))
 	os.Rename(fromBase+".preview.png", getPreviewPath(to))
 }
