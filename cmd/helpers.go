@@ -102,7 +102,7 @@ func getNotebook() (string, error) {
 
 // executeTemplate takes a text template and a data map, and returns the
 // text with the data inserted.
-func executeTemplate(tmplString string, data interface{}) (string, error) {
+func executeTemplate(tmplString string, data any) (string, error) {
 	tmpl, err := template.New("").Parse(tmplString)
 	if err != nil {
 		return "", err

@@ -38,7 +38,7 @@ var collectionCmd = &cobra.Command{
 	Short: "Generate a collection document given a number of files",
 	Run: func(cmd *cobra.Command, args []string) {
 		title, _ := cmd.Flags().GetString("title")
-		data := map[string]interface{}{
+		data := map[string]any{
 			"title": title,
 		}
 

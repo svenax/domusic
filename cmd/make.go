@@ -200,7 +200,7 @@ func (m *maker) makeTemplateFile(sourceFile string, minimal bool) (string, error
 	if format == "default" && strings.Contains(sourceFile, ".book") {
 		format = "book"
 	}
-	data := map[string]interface{}{
+	data := map[string]any{
 		"sourceFile":    sourceFile,
 		"version":       "2.24.0",
 		"pointAndClick": m.flagBool("point-and-click"),

@@ -243,7 +243,7 @@ func Test_getNotebook(t *testing.T) {
 func Test_executeTemplate(t *testing.T) {
 	type args struct {
 		tmplString string
-		data       interface{}
+		data       any
 	}
 	tests := []struct {
 		name    string
