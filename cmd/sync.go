@@ -1,0 +1,179 @@
+package cmd
+
+import (
+	"context"
+	"fmt"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
+
+	"github.com/urfave/cli/v3"
+)
+
+var syncCmd = &cli.Command{
+	Name:  "sync",
+	Usage: "Sync files from _output directory to external web server",
+	Flags: []cli.Flag{
+		&cli.BoolFlag{
+			Name:    "dry-run",
+			Aliases: []string{"n"},
+			Usage:   "perform a trial run with no changes made",
+		},
+		&cli.BoolFlag{
+			Name:    "verbose",
+			Aliases: []string{"v"},
+			Usage:   "increase verbosity",
+		},
+		&cli.BoolFlag{
+			Name:    "delete",
+			Aliases: []string{"d"},
+			Usage:   "delete extraneous files from destination dirs",
+		},
+		&cli.StringFlag{
+			Name:    "exclude",
+			Aliases: []string{"e"},
+			Usage:   "exclude files matching pattern",
+		},
+		&cli.StringFlag{
+			Name:    "include",
+			Aliases: []string{"i"},
+			Usage:   "include files matching pattern",
+		},
+	},
+	Action: func(ctx context.Context, cmd *cli.Command) error {
+		syncer := &syncer{cmd}
+		return syncer.run()
+	},
+}
+
+type syncer struct {
+	cmd *cli.Command
+}
+
+func (s *syncer) run() error {
+	// Validate configuration
+	if err := s.validateConfig(); err != nil {
+		return err
+	}
+
+	// Build source path
+	sourcePath := pathFromRoot(outputDir) + "/"
+
+	// Check if source directory exists
+	if _, err := os.Stat(sourcePath); os.IsNotExist(err) {
+		return fmt.Errorf("source directory %s does not exist", sourcePath)
+	}
+
+	// Build destination path
+	destPath := s.buildDestinationPath()
+
+	// Build rsync command
+	args := s.buildRsyncArgs(sourcePath, destPath)
+
+	fmt.Printf("Syncing %s to %s\n", sourcePath, destPath)
+	if s.cmd.Bool("dry-run") {
+		fmt.Println("Dry run mode - no changes will be made")
+	}
+
+	// Execute rsync
+	rsyncCmd := exec.Command("rsync", args...)
+	rsyncCmd.Stdout = os.Stdout
+	rsyncCmd.Stderr = os.Stderr
+
+	if s.cmd.Bool("verbose") {
+		fmt.Printf("Executing: rsync %s\n", strings.Join(args, " "))
+	}
+
+	return rsyncCmd.Run()
+}
+
+func (s *syncer) validateConfig() error {
+	server := getString("sync-server")
+	if server == "" {
+		return fmt.Errorf("sync-server not configured - please set it in your config file or DOMUSIC_SYNC_SERVER environment variable")
+	}
+
+	user := getString("sync-user")
+	if user == "" {
+		return fmt.Errorf("sync-user not configured - please set it in your config file or DOMUSIC_SYNC_USER environment variable")
+	}
+
+	path := getString("sync-path")
+	if path == "" {
+		return fmt.Errorf("sync-path not configured - please set it in your config file or DOMUSIC_SYNC_PATH environment variable")
+	}
+
+	return nil
+}
+
+func (s *syncer) buildDestinationPath() string {
+	user := getString("sync-user")
+	server := getString("sync-server")
+	path := getString("sync-path")
+
+	return fmt.Sprintf("%s@%s:%s", user, server, path)
+}
+
+func (s *syncer) buildRsyncArgs(source, dest string) []string {
+	args := []string{
+		"-az",        // archive mode, compress
+		"--progress", // show progress during transfer
+	}
+
+	// Add SSH key if configured
+	if sshKey := getString("sync-ssh-key"); sshKey != "" {
+		// Expand tilde to home directory if needed
+		if strings.HasPrefix(sshKey, "~/") {
+			home, err := os.UserHomeDir()
+			if err == nil {
+				sshKey = filepath.Join(home, sshKey[2:])
+			}
+		}
+		args = append(args, "-e", fmt.Sprintf("ssh -i %s", sshKey))
+	}
+
+	// Add dry-run flag
+	if s.cmd.Bool("dry-run") {
+		args = append(args, "--dry-run")
+	}
+
+	// Add delete flag
+	if s.cmd.Bool("delete") {
+		args = append(args, "--delete")
+	}
+
+	// Add exclude pattern from command line
+	if exclude := s.cmd.String("exclude"); exclude != "" {
+		args = append(args, "--exclude", exclude)
+	}
+
+	// Add exclude patterns from config file
+	for _, exclude := range getStringSlice("sync-exclude") {
+		if exclude != "" {
+			args = append(args, "--exclude", exclude)
+		}
+	}
+
+	// Add include pattern from command line
+	if include := s.cmd.String("include"); include != "" {
+		args = append(args, "--include", include)
+	}
+
+	// Add include patterns from config file
+	for _, include := range getStringSlice("sync-include") {
+		if include != "" {
+			args = append(args, "--include", include)
+		}
+	}
+
+	// Add verbose flag (rsync has different levels)
+	if s.cmd.Bool("verbose") {
+		args = append(args, "-v")
+	}
+
+	// Add source and destination
+	args = append(args, source, dest)
+
+	return args
+}

@@ -31,6 +31,7 @@ func Execute() {
 			collectionCmd,
 			editCmd,
 			makeCmd,
+			syncCmd,
 			versionCmd,
 			viewCmd,
 		},

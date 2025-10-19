@@ -22,6 +22,25 @@ to create this yourself. It can look something like this.
     ly-editor: "code -r"
     ly-viewer: "Preview"
 
+For the `sync` command, you also need to configure the remote server settings:
+
+    sync-server: "your-server.com"
+    sync-user: "your-username"
+    sync-path: "/var/www/html/music/"
+    sync-ssh-key: "~/.ssh/your_key"  # Optional, defaults to ~/.ssh/id_rsa
+
+You can also set default include and exclude patterns:
+
+    sync-include:
+      - "*.pdf"
+      - "*.png"
+    sync-exclude:
+      - "*.tmp"
+      - "*.log"
+      - ".DS_Store"
+
+See `example.domusic.yaml` for a complete configuration example.
+
 Usage
 -----
 

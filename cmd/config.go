@@ -5,17 +5,24 @@ import (
 	"path/filepath"
 	"reflect"
 	"runtime"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
 
 // Config holds all configuration values for domusic
 type Config struct {
-	Root        string `yaml:"root" env:"DOMUSIC_ROOT"`
-	LyEditor    string `yaml:"ly-editor" env:"DOMUSIC_LY_EDITOR"`
-	LyViewer    string `yaml:"ly-viewer" env:"DOMUSIC_LY_VIEWER"`
-	EnNotebook  string `yaml:"en-notebook" env:"DOMUSIC_EN_NOTEBOOK"`
-	FontInclude string `yaml:"font-include" env:"DOMUSIC_FONT_INCLUDE"`
+	Root        string   `yaml:"root" env:"DOMUSIC_ROOT"`
+	LyEditor    string   `yaml:"ly-editor" env:"DOMUSIC_LY_EDITOR"`
+	LyViewer    string   `yaml:"ly-viewer" env:"DOMUSIC_LY_VIEWER"`
+	EnNotebook  string   `yaml:"en-notebook" env:"DOMUSIC_EN_NOTEBOOK"`
+	FontInclude string   `yaml:"font-include" env:"DOMUSIC_FONT_INCLUDE"`
+	SyncServer  string   `yaml:"sync-server" env:"DOMUSIC_SYNC_SERVER"`
+	SyncUser    string   `yaml:"sync-user" env:"DOMUSIC_SYNC_USER"`
+	SyncPath    string   `yaml:"sync-path" env:"DOMUSIC_SYNC_PATH"`
+	SyncSSHKey  string   `yaml:"sync-ssh-key" env:"DOMUSIC_SYNC_SSH_KEY"`
+	SyncInclude []string `yaml:"sync-include" env:"DOMUSIC_SYNC_INCLUDE"`
+	SyncExclude []string `yaml:"sync-exclude" env:"DOMUSIC_SYNC_EXCLUDE"`
 }
 
 var config *Config
@@ -37,14 +44,23 @@ func loadFromEnv(cfg *Config) {
 			continue
 		}
 
-		// Only handle string fields for now
-		if field.Kind() != reflect.String {
+		// Get environment variable value
+		envValue := os.Getenv(envVar)
+		if envValue == "" {
 			continue
 		}
 
-		// Get environment variable value
-		if envValue := os.Getenv(envVar); envValue != "" {
+		// Handle string fields
+		if field.Kind() == reflect.String {
 			field.SetString(envValue)
+		} else if field.Kind() == reflect.Slice && field.Type().Elem().Kind() == reflect.String {
+			// Handle string slices - split by comma
+			parts := strings.Split(envValue, ",")
+			// Trim whitespace from each part
+			for i := range parts {
+				parts[i] = strings.TrimSpace(parts[i])
+			}
+			field.Set(reflect.ValueOf(parts))
 		}
 	}
 
@@ -133,6 +149,14 @@ func getString(key string) string {
 		return cfg.EnNotebook
 	case "font-include":
 		return cfg.FontInclude
+	case "sync-server":
+		return cfg.SyncServer
+	case "sync-user":
+		return cfg.SyncUser
+	case "sync-path":
+		return cfg.SyncPath
+	case "sync-ssh-key":
+		return cfg.SyncSSHKey
 	default:
 		return ""
 	}
@@ -155,5 +179,37 @@ func setString(key, value string) {
 		cfg.EnNotebook = value
 	case "font-include":
 		cfg.FontInclude = value
+	case "sync-server":
+		cfg.SyncServer = value
+	case "sync-user":
+		cfg.SyncUser = value
+	case "sync-path":
+		cfg.SyncPath = value
+	case "sync-ssh-key":
+		cfg.SyncSSHKey = value
+	}
+}
+
+// getStringSlice returns a string slice configuration value
+func getStringSlice(key string) []string {
+	cfg := GetConfig()
+	switch key {
+	case "sync-include":
+		return cfg.SyncInclude
+	case "sync-exclude":
+		return cfg.SyncExclude
+	default:
+		return []string{}
+	}
+}
+
+// setStringSlice sets a string slice configuration value
+func setStringSlice(key string, value []string) {
+	cfg := GetConfig()
+	switch key {
+	case "sync-include":
+		cfg.SyncInclude = value
+	case "sync-exclude":
+		cfg.SyncExclude = value
 	}
 }

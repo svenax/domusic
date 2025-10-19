@@ -1,0 +1,37 @@
+# Example configuration file for domusic
+# Save this as ~/.domusic.yaml
+
+# Root directory of your music files
+root: "/path/to/Bagpipemusic"
+
+# Editor for Lilypond files
+ly-editor: "code -r"
+
+# PDF viewer
+ly-viewer: "Preview"
+
+# Sync configuration for uploading to web server
+# All sync-* settings are required for the sync command to work
+
+# Remote server hostname or IP address
+sync-server: "your-server.com"
+
+# Username for SSH connection
+sync-user: "your-username"
+
+# Remote path where files should be uploaded
+sync-path: "/var/www/html/music/"
+
+# Optional: SSH private key file (if not using default ~/.ssh/id_rsa)
+# sync-ssh-key: "~/.ssh/music_server_key"
+
+# Optional: Default include patterns (applied in addition to --include flags)
+sync-include:
+  - "*.pdf"
+  - "*.png"
+
+# Optional: Default exclude patterns (applied in addition to --exclude flags)
+sync-exclude:
+  - "*.tmp"
+  - "*.log"
+  - ".DS_Store"
