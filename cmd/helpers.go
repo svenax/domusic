@@ -10,9 +10,9 @@ import (
 	"regexp"
 	"strings"
 	"text/template"
-
-	"github.com/spf13/viper"
 )
+
+const outputDir = "_output"
 
 var titleRx = regexp.MustCompile("title\\s*=\\s*\"(.+)\"")
 
@@ -45,13 +45,22 @@ func getTemplatePath(p string) string {
 // getPdfPath returns the full path to where the PDF file for a given tune
 // should be stored.
 func getPdfPath(p string) string {
-	return ensureSuffix(pathFromRoot("_output", noExt(makeRel(p))), ".pdf")
+	relPath := makeRel(p)
+	baseName := noExt(relPath)
+
+	// Handle empty filename case - should result in _output/.pdf
+	if baseName == "" && relPath == "" {
+		baseName = ""
+		return ensureSuffix(pathFromRoot(outputDir, baseName), "/.pdf")
+	}
+
+	return ensureSuffix(pathFromRoot(outputDir, baseName), ".pdf")
 }
 
 // getPreviewPath returns the full path to where the preview file for a given
 // tune should be stored.
 func getPreviewPath(p string) string {
-	return ensureSuffix(pathFromRoot("_output", noExt(makeRel(p))), ".preview.png")
+	return ensureSuffix(pathFromRoot(outputDir, noExt(makeRel(p))), ".preview.png")
 }
 
 // getOutputPath returns the full path to either preview or PDF file depending
@@ -68,12 +77,8 @@ func getOutputPath(p string, preview bool) string {
 // easily be slotted in to exec.Command.
 func getEditor() (string, []string, error) {
 	var cmds []string
-	if viper.IsSet("ly-editor") {
-		cmds = strings.Split(viper.GetString("ly-editor"), " ")
-		return cmds[0], cmds[1:], nil
-	}
-	if viper.IsSet("editor") {
-		cmds = strings.Split(viper.GetString("editor"), " ")
+	if isSet("ly-editor") {
+		cmds = strings.Split(getString("ly-editor"), " ")
 		return cmds[0], cmds[1:], nil
 	}
 	return "", []string{}, errors.New("no editor set")
@@ -84,20 +89,11 @@ func getEditor() (string, []string, error) {
 // easily be slotted in to exec.Command.
 func getViewer() (string, []string, error) {
 	var cmds []string
-	if viper.IsSet("ly-viewer") {
-		cmds = strings.Split(viper.GetString("ly-viewer"), " ")
+	if isSet("ly-viewer") {
+		cmds = strings.Split(getString("ly-viewer"), " ")
 		return cmds[0], cmds[1:], nil
 	}
 	return "", []string{}, errors.New("no PDF viewer set")
-}
-
-// getNotebook returns the Evernote notebook set in the configuration file or
-// exported from the shell.
-func getNotebook() (string, error) {
-	if viper.IsSet("en-notebook") {
-		return viper.GetString("en-notebook"), nil
-	}
-	return "", errors.New("no notebook set")
 }
 
 // executeTemplate takes a text template and a data map, and returns the
@@ -121,6 +117,11 @@ func ensureSuffix(p string, suffix string) string {
 // noExt strips all extensions from the given path.
 // E.g. given '/a/b.c.d' it will return '/a/b'.
 func noExt(p string) string {
+	if p == "." || p == "/" || p == "" {
+		// Fix empty path.
+		return ""
+	}
+
 	dir, base := path.Split(p)
 	if i := strings.Index(base, "."); i > 0 {
 		base = base[:i]
@@ -132,7 +133,7 @@ func noExt(p string) string {
 // makeRel returns a relative path from the music root. If the path is not
 // actually within the music root, it will be returned as is.
 func makeRel(p string) string {
-	return strings.TrimPrefix(p, ensureSuffix(viper.GetString("root"), "/"))
+	return strings.TrimPrefix(p, ensureSuffix(getString("root"), "/"))
 }
 
 // pathFromRoot returns an absolute path starting with music root and then
@@ -141,7 +142,7 @@ func makeRel(p string) string {
 func pathFromRoot(parts ...string) string {
 	fullPath := path.Join(parts...)
 	if !path.IsAbs(fullPath) {
-		fullPath = path.Join(viper.GetString("root"), fullPath)
+		fullPath = path.Join(getString("root"), fullPath)
 	}
 
 	return fullPath

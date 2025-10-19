@@ -1,57 +1,51 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"runtime"
 
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
+	"github.com/urfave/cli/v3"
 )
 
 var cfgFile string
 
-var rootCmd = &cobra.Command{
-	Use:   "domusic",
-	Short: "Handles the music library at svenax.net",
-}
-
-// Execute adds all child commands to the root command and sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the rootCmd.
+// Execute creates and runs the CLI application
 func Execute() {
-	err := rootCmd.Execute()
-	errExit(err)
+	app := &cli.Command{
+		Name:  "domusic",
+		Usage: "Handles the music library at svenax.net",
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:        "config",
+				Usage:       getConfigUsage(),
+				Destination: &cfgFile,
+			},
+		},
+		Before: func(ctx context.Context, c *cli.Command) (context.Context, error) {
+			initConfig()
+			return ctx, nil
+		},
+		Commands: []*cli.Command{
+			collectionCmd,
+			editCmd,
+			makeCmd,
+			versionCmd,
+			viewCmd,
+		},
+	}
+
+	if err := app.Run(context.Background(), os.Args); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
 }
 
-func init() {
-	cobra.OnInitialize(initConfig)
-
+func getConfigUsage() string {
 	filename := ".domusic.yaml"
 	if runtime.GOOS == "windows" {
 		filename = "domusic.ini"
 	}
-
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", fmt.Sprintf("config file (default is $HOME/%s)", filename))
-}
-
-func initConfig() {
-	if cfgFile != "" {
-		viper.SetConfigFile(cfgFile)
-	} else {
-		home, err := os.UserHomeDir()
-		errExit(err)
-
-		viper.AddConfigPath(home)
-
-		viper.SetConfigName(".domusic")
-
-		if runtime.GOOS == "windows" {
-			viper.SetConfigName("domusic")
-		}
-	}
-
-	viper.AutomaticEnv()
-
-	err := viper.ReadInConfig()
-	errExit(err)
+	return fmt.Sprintf("config file (default is $HOME/%s)", filename)
 }

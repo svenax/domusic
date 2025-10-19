@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -9,56 +10,96 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
+	"github.com/urfave/cli/v3"
 )
 
-var lyMaker *maker
-var makeCmd = &cobra.Command{
-	Use:   "make files...",
-	Short: "Run Lilypond on music file(s)",
-	Run: func(cmd *cobra.Command, args []string) {
+var makeCmd = &cli.Command{
+	Name:  "make",
+	Usage: "Run Lilypond on music file(s)",
+	Flags: []cli.Flag{
+		&cli.IntFlag{
+			Name:    "resolution",
+			Aliases: []string{"r"},
+			Value:   144,
+			Usage:   "resolution for PNG files",
+		},
+		&cli.IntFlag{
+			Name:    "staff-size",
+			Aliases: []string{"s"},
+			Value:   15,
+			Usage:   "staff size",
+		},
+		&cli.StringFlag{
+			Name:    "paper-size",
+			Aliases: []string{"p"},
+			Value:   "a4",
+			Usage:   "paper size",
+		},
+		&cli.StringFlag{
+			Name:    "format",
+			Aliases: []string{"f"},
+			Value:   "default",
+			Usage:   "use header format file header_{format}",
+		},
+		&cli.StringFlag{
+			Name:    "type",
+			Aliases: []string{"t"},
+			Value:   "pdf",
+			Usage:   "save output as {type}",
+		},
+		&cli.BoolFlag{
+			Name:    "landscape",
+			Aliases: []string{"l"},
+			Usage:   "use landscape paper orientation",
+		},
+		&cli.BoolFlag{
+			Name:    "keep",
+			Aliases: []string{"k"},
+			Usage:   "keep generated files for debugging",
+		},
+		&cli.BoolFlag{
+			Name:  "post",
+			Usage: "generate a png for posting to social media",
+		},
+		&cli.BoolFlag{
+			Name:  "root",
+			Usage: "save result in project root",
+		},
+		&cli.BoolFlag{
+			Name:  "crop",
+			Usage: "crop page to minimal size",
+		},
+		&cli.BoolFlag{
+			Name:  "point-and-click",
+			Usage: "turn on point-and-click",
+		},
+		&cli.BoolFlag{
+			Name:  "view-spacing",
+			Usage: "turn on Paper.annotatespacing",
+		},
+		&cli.StringFlag{
+			Name:  "font-include",
+			Usage: "include font configuration file",
+		},
+	},
+
+	Action: func(ctx context.Context, cmd *cli.Command) error {
+		// Set font-include in config
+		setString("font-include", cmd.String("font-include"))
+
+		args := cmd.Args().Slice()
+		maker := &maker{cmd}
 		for _, arg := range args {
 			files := []string{arg}
 			if strings.Contains(arg, "*") {
 				files, _ = filepath.Glob(pathFromRoot(arg))
 			}
 			for _, f := range files {
-				lyMaker.run(getSourcePath(f))
+				maker.run(getSourcePath(f))
 			}
 		}
+		return nil
 	},
-	PreRun: func(cmd *cobra.Command, args []string) {
-		if p, _ := cmd.Flags().GetBool("post"); p {
-			cmd.Flags().Set("type", "png")
-			cmd.Flags().Set("root", "true")
-			cmd.Flags().Set("crop", "true")
-			if !cmd.Flags().Changed("resolution") {
-				cmd.Flags().Set("resolution", "84")
-			}
-		}
-	},
-}
-
-func init() {
-	rootCmd.AddCommand(makeCmd)
-
-	makeCmd.Flags().IntP("resolution", "r", 144, "resolution for PNG files")
-	makeCmd.Flags().IntP("staff-size", "s", 15, "staff size")
-	makeCmd.Flags().StringP("paper-size", "p", "a4", "paper size")
-	makeCmd.Flags().StringP("format", "f", "default", "use header format file header_{format}")
-	makeCmd.Flags().StringP("type", "t", "pdf", "save output as {type}")
-	makeCmd.Flags().BoolP("landscape", "l", false, "use landscape paper orientation")
-	makeCmd.Flags().BoolP("keep", "k", false, "keep generated files for debugging")
-	makeCmd.Flags().BoolP("post", "", false, "generate a png for posting to social media")
-	makeCmd.Flags().BoolP("root", "", false, "save result in project root")
-	makeCmd.Flags().BoolP("crop", "", false, "crop page to minimal size")
-	makeCmd.Flags().BoolP("point-and-click", "", false, "turn on point-and-click")
-	makeCmd.Flags().BoolP("view-spacing", "", false, "turn on Paper.annotatespacing")
-	makeCmd.Flags().StringP("font-include", "", "", "include font configuration file")
-	viper.BindPFlag("font-include", makeCmd.Flags().Lookup("font-include"))
-
-	lyMaker = &maker{makeCmd}
 }
 
 const fileHeader = `%% Generated from {{.sourceFile}} by domusic
@@ -92,22 +133,33 @@ const fileHeader = `%% Generated from {{.sourceFile}} by domusic
 `
 
 type maker struct {
-	cmd *cobra.Command
+	cmd *cli.Command
 }
 
 func (m *maker) run(src string) error {
 	var err error
 	fmt.Println("Processing file", src)
-	if m.flagString("type") == "pdf" {
+
+	// Handle post flag overrides
+	outputType := m.cmd.String("type")
+	resolution := m.cmd.Int("resolution")
+	if m.cmd.Bool("post") {
+		outputType = "png"
+		if resolution == 144 { // default resolution
+			resolution = 84
+		}
+	}
+
+	if outputType == "pdf" {
 		fmt.Println("  * Creating preview file")
-		err = lyMaker.preview(src, m.flagInt("resolution"))
+		err = m.preview(src, resolution)
 		if err == nil {
 			fmt.Println("  * Creating PDF file")
-			err = lyMaker.pdf(src)
+			err = m.pdf(src)
 		}
 	} else {
 		fmt.Println("  * Creating PNG file")
-		err = lyMaker.png(src, m.flagInt("resolution"))
+		err = m.png(src, resolution)
 	}
 
 	templateFile := getTemplatePath(src)
@@ -121,14 +173,14 @@ func (m *maker) run(src string) error {
 		return err
 	}
 
-	if m.flagBool("keep") {
+	if m.cmd.Bool("keep") {
 		return nil
 	}
 
 	fmt.Println("  * Cleaning up")
-	lyMaker.crop(templateFile)
+	m.crop(templateFile)
 	cleanup(templateFile)
-	if !m.flagBool("root") {
+	if !m.cmd.Bool("root") {
 		moveFiles(templateFile, src)
 	}
 
@@ -185,32 +237,32 @@ func (m *maker) runLilypond(src string, args []string, minimal bool) error {
 }
 
 func (m *maker) crop(src string) error {
-	if !m.flagBool("crop") {
+	if !m.cmd.Bool("crop") {
 		return nil
 	}
 
-	path := strings.TrimSuffix(src, ".ly") + "." + m.flagString("type")
+	path := strings.TrimSuffix(src, ".ly") + "." + m.cmd.String("type")
 	c := exec.Command("mogrify", "-trim", "-bordercolor", "white", "-border", "12", path)
 
 	return c.Run()
 }
 
 func (m *maker) makeTemplateFile(sourceFile string, minimal bool) (string, error) {
-	format := m.flagString("format")
+	format := m.cmd.String("format")
 	if format == "default" && strings.Contains(sourceFile, ".book") {
 		format = "book"
 	}
 	data := map[string]any{
 		"sourceFile":    sourceFile,
 		"version":       "2.24.0",
-		"pointAndClick": m.flagBool("point-and-click"),
-		"staffSize":     m.flagInt("staff-size"),
-		"paperSize":     m.flagString("paper-size"),
-		"landscape":     m.flagBool("landscape"),
+		"pointAndClick": m.cmd.Bool("point-and-click"),
+		"staffSize":     m.cmd.Int("staff-size"),
+		"paperSize":     m.cmd.String("paper-size"),
+		"landscape":     m.cmd.Bool("landscape"),
 		"headerFormat":  format,
-		"viewSpacing":   m.flagBool("view-spacing"),
-		"removeTagline": m.flagBool("crop"),
-		"fontInclude":   viper.GetString("font-include"),
+		"viewSpacing":   m.cmd.Bool("view-spacing"),
+		"removeTagline": m.cmd.Bool("crop"),
+		"fontInclude":   getString("font-include"),
 	}
 
 	header, err := executeTemplate(fileHeader, data)
@@ -249,21 +301,6 @@ func (m *maker) makeTemplateFile(sourceFile string, minimal bool) (string, error
 	}
 
 	return templatePath, nil
-}
-
-func (m *maker) flagBool(name string) bool {
-	val, _ := m.cmd.Flags().GetBool(name)
-	return val
-}
-
-func (m *maker) flagInt(name string) int {
-	val, _ := m.cmd.Flags().GetInt(name)
-	return val
-}
-
-func (m *maker) flagString(name string) string {
-	val, _ := m.cmd.Flags().GetString(name)
-	return val
 }
 
 func cleanup(path string) {

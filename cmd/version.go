@@ -2,31 +2,30 @@ package cmd
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"os/exec"
 	"runtime"
 
-	"github.com/spf13/cobra"
+	"github.com/urfave/cli/v3"
 )
 
-const version = "1.7.1"
+const version = "2.0.0"
 
 var (
 	BuildTime = "unknown"
 	GitSha1   = "dev"
 )
 
-var versionCmd = &cobra.Command{
-	Use:   "version",
-	Short: "Show version of this program and of Lilypond",
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("%s v%s-%s built %s %s/%s\n", cmd.Root().Name(), version, GitSha1, BuildTime, runtime.GOOS, runtime.GOARCH)
+var versionCmd = &cli.Command{
+	Name:  "version",
+	Usage: "Show version of this program and of Lilypond",
+	Action: func(ctx context.Context, cmd *cli.Command) error {
+		// Version command doesn't need config
+		fmt.Printf("domusic v%s-%s built %s %s/%s\n", version, GitSha1, BuildTime, runtime.GOOS, runtime.GOARCH)
 		fmt.Println(lilyVersion())
+		return nil
 	},
-}
-
-func init() {
-	rootCmd.AddCommand(versionCmd)
 }
 
 func lilyVersion() string {

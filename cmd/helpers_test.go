@@ -7,9 +7,18 @@ import (
 	"reflect"
 	"strings"
 	"testing"
-
-	"github.com/spf13/viper"
 )
+
+func init() {
+	// Set test mode as early as possible to prevent config file loading
+	testMode = true
+}
+
+func resetConfigForTest() {
+	// Enable test mode to prevent config file loading
+	testMode = true
+	config = &Config{}
+}
 
 func Test_getSourcePath(t *testing.T) {
 	type args struct {
@@ -150,13 +159,28 @@ func Test_getEditor(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Setup viper configuration
-			viper.Reset()
+			// Setup config
+			resetConfigForTest()
+
+			// Setup environment variables for testing
+			oldEditor := os.Getenv("EDITOR")
+			defer func() {
+				if oldEditor != "" {
+					os.Setenv("EDITOR", oldEditor)
+				} else {
+					os.Unsetenv("EDITOR")
+				}
+			}()
+
 			if tt.lyEditor != "" {
-				viper.Set("ly-editor", tt.lyEditor)
+				setString("ly-editor", tt.lyEditor)
 			}
 			if tt.editor != "" {
-				viper.Set("editor", tt.editor)
+				os.Setenv("EDITOR", tt.editor)
+				// Force config reload to pick up environment variable
+				config = nil
+				// Initialize config with the new environment variable
+				initConfig()
 			}
 
 			name, args, err := getEditor()
@@ -188,10 +212,10 @@ func Test_getViewer(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Setup viper configuration
-			viper.Reset()
+			// Setup config
+			resetConfigForTest()
 			if tt.lyViewer != "" {
-				viper.Set("ly-viewer", tt.lyViewer)
+				setString("ly-viewer", tt.lyViewer)
 			}
 
 			name, args, err := getViewer()
@@ -204,37 +228,6 @@ func Test_getViewer(t *testing.T) {
 			}
 			if !reflect.DeepEqual(args, tt.wantArgs) {
 				t.Errorf("getViewer() args = %v, wantArgs %v", args, tt.wantArgs)
-			}
-		})
-	}
-}
-
-func Test_getNotebook(t *testing.T) {
-	tests := []struct {
-		name       string
-		enNotebook string
-		want       string
-		wantErr    bool
-	}{
-		{"notebook_set", "Music Scores", "Music Scores", false},
-		{"notebook_with_spaces", "My Music Collection", "My Music Collection", false},
-		{"no_notebook_set", "", "", true},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Setup viper configuration
-			viper.Reset()
-			if tt.enNotebook != "" {
-				viper.Set("en-notebook", tt.enNotebook)
-			}
-
-			got, err := getNotebook()
-			if (err != nil) != tt.wantErr {
-				t.Errorf("getNotebook() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if got != tt.want {
-				t.Errorf("getNotebook() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -381,9 +374,9 @@ func Test_makeRel(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Setup viper configuration
-			viper.Reset()
-			viper.Set("root", tt.args.root)
+			// Setup config
+			resetConfigForTest()
+			setString("root", tt.args.root)
 
 			if got := makeRel(tt.args.path); got != tt.want {
 				t.Errorf("makeRel() = %v, want %v", got, tt.want)
@@ -411,9 +404,9 @@ func Test_pathFromRoot(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Setup viper configuration
-			viper.Reset()
-			viper.Set("root", tt.args.root)
+			// Setup config
+			resetConfigForTest()
+			setString("root", tt.args.root)
 
 			if got := pathFromRoot(tt.args.parts...); got != tt.want {
 				t.Errorf("pathFromRoot() = %v, want %v", got, tt.want)
@@ -534,5 +527,3 @@ func Test_copyFile(t *testing.T) {
 		})
 	}
 }
-
-// Use strings.Contains directly in the test code instead of a helper function.

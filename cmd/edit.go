@@ -1,16 +1,18 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os/exec"
 
-	"github.com/spf13/cobra"
+	"github.com/urfave/cli/v3"
 )
 
-var editCmd = &cobra.Command{
-	Use:   "edit file",
-	Short: "Create or edit a Lilypond music file",
-	Run: func(cmd *cobra.Command, args []string) {
+var editCmd = &cli.Command{
+	Name:  "edit",
+	Usage: "Create or edit a Lilypond music file <file>",
+	Action: func(ctx context.Context, cmd *cli.Command) error {
+		args := cmd.Args().Slice()
 		if len(args) != 1 {
 			msgExit("edit needs a file name")
 		}
@@ -22,9 +24,6 @@ var editCmd = &cobra.Command{
 		if err := c.Run(); err != nil {
 			errExit(fmt.Errorf("failed to run editor '%s %v': %w", e, append(ea, getSourcePath(args[0])), err))
 		}
+		return nil
 	},
-}
-
-func init() {
-	rootCmd.AddCommand(editCmd)
 }

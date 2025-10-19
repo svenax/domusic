@@ -1,10 +1,9 @@
 `domusic` tool suite for the music library at <http://svenax.net>
-===============================================================
+=================================================================
 
 A tool set to handle the bagpipe music archive at <http://svenax.net>.
 It is mostly a rewrite of the old `makelily` Python code, but with a lot
-of fixes and cleanup. I intend to add commands to upload the files to the
-archive and to Evernote here as well.
+of fixes and cleanup.
 
 Dependencies
 ------------
