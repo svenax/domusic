@@ -178,7 +178,9 @@ func (m *maker) run(src string) error {
 	}
 
 	fmt.Println("  * Cleaning up")
-	m.crop(templateFile)
+	if m.cmd.Bool("crop") || m.cmd.Bool("post") {
+		m.crop(templateFile)
+	}
 	cleanup(templateFile)
 	if !m.cmd.Bool("root") {
 		moveFiles(templateFile, src)
@@ -237,11 +239,7 @@ func (m *maker) runLilypond(src string, args []string, minimal bool) error {
 }
 
 func (m *maker) crop(src string) error {
-	if !m.cmd.Bool("crop") {
-		return nil
-	}
-
-	path := strings.TrimSuffix(src, ".ly") + "." + m.cmd.String("type")
+	path := strings.TrimSuffix(src, ".ly") + ".png"
 	c := exec.Command("mogrify", "-trim", "-bordercolor", "white", "-border", "12", path)
 
 	return c.Run()
@@ -261,7 +259,7 @@ func (m *maker) makeTemplateFile(sourceFile string, minimal bool) (string, error
 		"landscape":     m.cmd.Bool("landscape"),
 		"headerFormat":  format,
 		"viewSpacing":   m.cmd.Bool("view-spacing"),
-		"removeTagline": m.cmd.Bool("crop"),
+		"removeTagline": m.cmd.Bool("crop") || m.cmd.Bool("post"),
 		"fontInclude":   getString("font-include"),
 	}
 
