@@ -21,6 +21,11 @@ var syncCmd = &cli.Command{
 			Usage:   "perform a trial run with no changes made",
 		},
 		&cli.BoolFlag{
+			Name:    "progress",
+			Aliases: []string{"p"},
+			Usage:   "show progress during transfer",
+		},
+		&cli.BoolFlag{
 			Name:    "verbose",
 			Aliases: []string{"v"},
 			Usage:   "increase verbosity",
@@ -117,8 +122,7 @@ func (s *syncer) buildDestinationPath() string {
 
 func (s *syncer) buildRsyncArgs(source, dest string) []string {
 	args := []string{
-		"-az",        // archive mode, compress
-		"--progress", // show progress during transfer
+		"-az", // archive mode, compress
 	}
 
 	// Add SSH key if configured
@@ -133,34 +137,27 @@ func (s *syncer) buildRsyncArgs(source, dest string) []string {
 		args = append(args, "-e", fmt.Sprintf("ssh -i %s", sshKey))
 	}
 
-	// Add dry-run flag
 	if s.cmd.Bool("dry-run") {
 		args = append(args, "--dry-run")
 	}
-
-	// Add delete flag
+	if s.cmd.Bool("progress") || s.cmd.Bool("verbose") {
+		args = append(args, "--progress")
+	}
 	if s.cmd.Bool("delete") {
 		args = append(args, "--delete")
 	}
 
-	// Add exclude pattern from command line
 	if exclude := s.cmd.String("exclude"); exclude != "" {
 		args = append(args, "--exclude", exclude)
 	}
-
-	// Add exclude patterns from config file
 	for _, exclude := range getStringSlice("sync-exclude") {
 		if exclude != "" {
 			args = append(args, "--exclude", exclude)
 		}
 	}
-
-	// Add include pattern from command line
 	if include := s.cmd.String("include"); include != "" {
 		args = append(args, "--include", include)
 	}
-
-	// Add include patterns from config file
 	for _, include := range getStringSlice("sync-include") {
 		if include != "" {
 			args = append(args, "--include", include)
