@@ -77,8 +77,9 @@ func getOutputPath(p string, preview bool) string {
 // easily be slotted in to exec.Command.
 func getEditor() (string, []string, error) {
 	var cmds []string
-	if isSet("ly-editor") {
-		cmds = strings.Split(getString("ly-editor"), " ")
+	config := GetConfig()
+	if config.LyEditor != "" {
+		cmds = strings.Split(config.LyEditor, " ")
 		return cmds[0], cmds[1:], nil
 	}
 	return "", []string{}, errors.New("no editor set")
@@ -89,8 +90,9 @@ func getEditor() (string, []string, error) {
 // easily be slotted in to exec.Command.
 func getViewer() (string, []string, error) {
 	var cmds []string
-	if isSet("ly-viewer") {
-		cmds = strings.Split(getString("ly-viewer"), " ")
+	config := GetConfig()
+	if config.LyViewer != "" {
+		cmds = strings.Split(config.LyViewer, " ")
 		return cmds[0], cmds[1:], nil
 	}
 	return "", []string{}, errors.New("no PDF viewer set")
@@ -133,16 +135,18 @@ func noExt(p string) string {
 // makeRel returns a relative path from the music root. If the path is not
 // actually within the music root, it will be returned as is.
 func makeRel(p string) string {
-	return strings.TrimPrefix(p, ensureSuffix(getString("root"), "/"))
+	config := GetConfig()
+	return strings.TrimPrefix(p, ensureSuffix(config.Root, "/"))
 }
 
 // pathFromRoot returns an absolute path starting with music root and then
 // all the given parts. If the given path is already absolute, it is returned
 // as is.
 func pathFromRoot(parts ...string) string {
+	config := GetConfig()
 	fullPath := path.Join(parts...)
 	if !path.IsAbs(fullPath) {
-		fullPath = path.Join(getString("root"), fullPath)
+		fullPath = path.Join(config.Root, fullPath)
 	}
 
 	return fullPath

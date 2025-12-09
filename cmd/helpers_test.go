@@ -173,7 +173,7 @@ func Test_getEditor(t *testing.T) {
 			}()
 
 			if tt.lyEditor != "" {
-				setString("ly-editor", tt.lyEditor)
+				GetConfig().LyEditor = tt.lyEditor
 			}
 			if tt.editor != "" {
 				os.Setenv("EDITOR", tt.editor)
@@ -215,7 +215,7 @@ func Test_getViewer(t *testing.T) {
 			// Setup config
 			resetConfigForTest()
 			if tt.lyViewer != "" {
-				setString("ly-viewer", tt.lyViewer)
+				GetConfig().LyViewer = tt.lyViewer
 			}
 
 			name, args, err := getViewer()
@@ -376,7 +376,7 @@ func Test_makeRel(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup config
 			resetConfigForTest()
-			setString("root", tt.args.root)
+			GetConfig().Root = tt.args.root
 
 			if got := makeRel(tt.args.path); got != tt.want {
 				t.Errorf("makeRel() = %v, want %v", got, tt.want)
@@ -406,7 +406,7 @@ func Test_pathFromRoot(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup config
 			resetConfigForTest()
-			setString("root", tt.args.root)
+			GetConfig().Root = tt.args.root
 
 			if got := pathFromRoot(tt.args.parts...); got != tt.want {
 				t.Errorf("pathFromRoot() = %v, want %v", got, tt.want)

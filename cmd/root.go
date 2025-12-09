@@ -9,7 +9,7 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
-var cfgFile string
+var configPath string
 
 // Execute creates and runs the CLI application
 func Execute() {
@@ -20,7 +20,7 @@ func Execute() {
 			&cli.StringFlag{
 				Name:        "config",
 				Usage:       getConfigUsage(),
-				Destination: &cfgFile,
+				Destination: &configPath,
 			},
 		},
 		Before: func(ctx context.Context, c *cli.Command) (context.Context, error) {
@@ -44,9 +44,8 @@ func Execute() {
 }
 
 func getConfigUsage() string {
-	filename := ".domusic.yaml"
 	if runtime.GOOS == "windows" {
-		filename = "domusic.ini"
+		return "config file (default searches: .\\.domusic.yaml, %APPDATA%\\domusic\\config.yaml, %HOME%\\.domusic.yaml)"
 	}
-	return fmt.Sprintf("config file (default is $HOME/%s)", filename)
+	return "config file (default searches: ./.domusic.yaml (and parents), ~/.config/domusic/config.yaml, ~/.domusic.yaml)"
 }
