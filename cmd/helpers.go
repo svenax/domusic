@@ -16,20 +16,6 @@ const outputDir = "_output"
 
 var titleRx = regexp.MustCompile("title\\s*=\\s*\"(.+)\"")
 
-// msgExit prints an error message and exits.
-func msgExit(msg string) {
-	fmt.Fprintln(os.Stderr, "Error:", msg)
-	os.Exit(1)
-}
-
-// errExit prints an error message and exits if err is not nil.
-func errExit(err error) {
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
-}
-
 // getSourcePath returns the full path to a Lilypond file in the music
 // hierarchy. It does not check if the file exists.
 func getSourcePath(p string) string {

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -92,7 +91,15 @@ var makeCmd = &cli.Command{
 		for _, arg := range args {
 			files := []string{arg}
 			if strings.Contains(arg, "*") {
-				files, _ = filepath.Glob(pathFromRoot(arg))
+				var err error
+				files, err = filepath.Glob(pathFromRoot(arg))
+				if err != nil {
+					return fmt.Errorf("failed to expand glob pattern %s: %w", arg, err)
+				}
+				if len(files) == 0 {
+					fmt.Fprintf(os.Stderr, "Warning: no files matched pattern %s\n", arg)
+					continue
+				}
 			}
 			for _, f := range files {
 				maker.run(getSourcePath(f))
@@ -263,12 +270,16 @@ func (m *maker) makeTemplateFile(sourceFile string, minimal bool) (string, error
 	common := GetConfig().Template.Common
 	if common != "" {
 		commonExpanded, err := executeTemplate(common, data)
-		errExit(err)
+		if err != nil {
+			return "", fmt.Errorf("failed to execute common template: %w", err)
+		}
 		common = commonExpanded
 	}
 
 	source, err := os.ReadFile(sourceFile)
-	errExit(err)
+	if err != nil {
+		return "", fmt.Errorf("failed to read source file %s: %w", sourceFile, err)
+	}
 
 	sourceFile = ensureSuffix(noExt(sourceFile), ".ly")
 	templatePath := getTemplatePath(sourceFile)
@@ -284,11 +295,16 @@ func (m *maker) makeTemplateFile(sourceFile string, minimal bool) (string, error
 	}
 	data["common"] = common
 	template, err := executeTemplate(makeTemplate, data)
-	errExit(err)
+	if err != nil {
+		return "", fmt.Errorf("failed to execute make template: %w", err)
+	}
 
 	n, err := f.WriteString(template)
-	if err == nil && n < len(template) {
-		return "", io.ErrShortWrite
+	if err != nil {
+		return "", fmt.Errorf("failed to write template: %w", err)
+	}
+	if n < len(template) {
+		return "", fmt.Errorf("incomplete write: wrote %d of %d bytes", n, len(template))
 	}
 
 	includeLine := true
@@ -298,9 +314,13 @@ func (m *maker) makeTemplateFile(sourceFile string, minimal bool) (string, error
 			includeLine = false
 		}
 		if includeLine {
-			n, err = f.WriteString(string(line) + "\n")
-			if err == nil && n < len(line) {
-				return "", io.ErrShortWrite
+			lineStr := string(line) + "\n"
+			n, err = f.WriteString(lineStr)
+			if err != nil {
+				return "", fmt.Errorf("failed to write line: %w", err)
+			}
+			if n < len(lineStr) {
+				return "", fmt.Errorf("incomplete line write: wrote %d of %d bytes", n, len(lineStr))
 			}
 		}
 		if minimal && bytes.HasPrefix(trimmedLine, []byte("%%% END SKIP")) {

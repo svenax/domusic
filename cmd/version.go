@@ -35,7 +35,12 @@ var versionCmd = &cli.Command{
 
 func lilyVersion() string {
 	c := exec.Command("lilypond", "--version")
-	out, _ := c.Output()
-
+	out, err := c.Output()
+	if err != nil {
+		return "(lilypond not found or failed to run)"
+	}
+	if len(out) == 0 {
+		return "(no version output)"
+	}
 	return string(bytes.Split(out, []byte("\n"))[0])
 }

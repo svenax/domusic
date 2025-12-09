@@ -14,15 +14,17 @@ var editCmd = &cli.Command{
 	Action: func(ctx context.Context, cmd *cli.Command) error {
 		args := cmd.Args().Slice()
 		if len(args) != 1 {
-			msgExit("edit needs a file name")
+			return fmt.Errorf("edit needs a file name")
 		}
 
 		e, ea, err := getEditor()
-		errExit(err)
+		if err != nil {
+			return fmt.Errorf("failed to get editor: %w", err)
+		}
 
 		c := exec.Command(e, append(ea, getSourcePath(args[0]))...)
 		if err := c.Run(); err != nil {
-			errExit(fmt.Errorf("failed to run editor '%s %v': %w", e, append(ea, getSourcePath(args[0])), err))
+			return fmt.Errorf("failed to run editor '%s %v': %w", e, append(ea, getSourcePath(args[0])), err)
 		}
 		return nil
 	},
