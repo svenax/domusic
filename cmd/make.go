@@ -94,10 +94,10 @@ var makeCmd = &cli.Command{
 				var err error
 				files, err = filepath.Glob(pathFromRoot(arg))
 				if err != nil {
-					return fmt.Errorf("failed to expand glob pattern %s: %w", arg, err)
+					return printAndReturnError("failed to expand glob pattern %s: %w", arg, err)
 				}
 				if len(files) == 0 {
-					fmt.Fprintf(os.Stderr, "Warning: no files matched pattern %s\n", arg)
+					printWarning("no files matched pattern %s", arg)
 					continue
 				}
 			}

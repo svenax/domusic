@@ -16,6 +16,19 @@ const outputDir = "_output"
 
 var titleRx = regexp.MustCompile("title\\s*=\\s*\"(.+)\"")
 
+// printAndReturnError wraps an error with a format string and prints it to stderr before returning it.
+// It uses fmt.Errorf with %w to preserve error wrapping for errors.Is/As checks.
+func printAndReturnError(format string, args ...any) error {
+	err := fmt.Errorf(format, args...)
+	fmt.Fprintln(os.Stderr, "Error:", err)
+	return err
+}
+
+// printWarning prints a warning message to stderr.
+func printWarning(format string, args ...any) {
+	fmt.Fprintf(os.Stderr, "Warning: "+format+"\n", args...)
+}
+
 // getSourcePath returns the full path to a Lilypond file in the music
 // hierarchy. It does not check if the file exists.
 func getSourcePath(p string) string {

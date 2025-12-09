@@ -24,7 +24,6 @@ var versionCmd = &cli.Command{
 	Name:  "version",
 	Usage: "Show version of this program and of Lilypond",
 	Action: func(ctx context.Context, cmd *cli.Command) error {
-		// Version command doesn't need config
 		fmt.Printf("domusic v%s (%s) built %s %s/%s\n", version, gitSha1, buildTime, runtime.GOOS, runtime.GOARCH)
 		fmt.Println(lilyVersion())
 		fmt.Println("Version cmd:", lowestLilyVersion)

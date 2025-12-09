@@ -88,7 +88,7 @@ var collectionCmd = &cli.Command{
 		if common != "" {
 			commonExpanded, err := executeTemplate(common, data)
 			if err != nil {
-				return fmt.Errorf("failed to execute common template: %w", err)
+				return printAndReturnError("failed to execute common template: %w", err)
 			}
 			common = commonExpanded
 		}
@@ -100,7 +100,7 @@ var collectionCmd = &cli.Command{
 		data["common"] = common
 		template, err := executeTemplate(headerTemplate, data)
 		if err != nil {
-			return fmt.Errorf("failed to execute collection header template: %w", err)
+			return printAndReturnError("failed to execute collection header template: %w", err)
 		}
 
 		files := []string{}
@@ -108,10 +108,10 @@ var collectionCmd = &cli.Command{
 			if strings.Contains(arg, "*") {
 				f, err := filepath.Glob(pathFromRoot(arg))
 				if err != nil {
-					return fmt.Errorf("failed to expand glob pattern %s: %w", arg, err)
+					return printAndReturnError("failed to expand glob pattern %s: %w", arg, err)
 				}
 				if len(f) == 0 {
-					fmt.Fprintf(os.Stderr, "Warning: no files matched pattern %s\n", arg)
+					printWarning("no files matched pattern %s", arg)
 				}
 				files = append(files, f...)
 			} else {
@@ -126,11 +126,11 @@ var collectionCmd = &cli.Command{
 		for _, f := range files {
 			fd, err := os.ReadFile(getSourcePath(f))
 			if err != nil {
-				return fmt.Errorf("failed to read file %s: %w", f, err)
+				return printAndReturnError("failed to read file %s: %w", f, err)
 			}
 			matches := titleRx.FindSubmatch(fd)
 			if len(matches) < 2 {
-				return fmt.Errorf("no title found in file: %s", f)
+				return printAndReturnError("no title found in file: %s", f)
 			}
 			title := matches[1]
 			template += fmt.Sprintf("\\tocItem \\markup \"%s\"\n", title)
