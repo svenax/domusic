@@ -84,8 +84,8 @@ var makeCmd = &cli.Command{
 	},
 
 	Action: func(ctx context.Context, cmd *cli.Command) error {
-		// Set font-include in config
-		setString("font-include", cmd.String("font-include"))
+		config := GetConfig()
+		config.FontInclude = cmd.String("font-include")
 
 		args := cmd.Args().Slice()
 		maker := &maker{cmd}
@@ -102,7 +102,8 @@ var makeCmd = &cli.Command{
 	},
 }
 
-const fileHeader = `%% Generated from {{.sourceFile}} by domusic
+// Default template if none is provided in config
+const makeHeaderTemplate = `%% Generated from {{.sourceFile}} by domusic
 
 \version "{{.version}}"
 
@@ -112,9 +113,6 @@ const fileHeader = `%% Generated from {{.sourceFile}} by domusic
 #(set-default-paper-size "{{.paperSize}}" '{{if .landscape}}landscape{{else}}portrait{{end}})
 
 {{if .fontInclude}}\include "{{.fontInclude}}.ily"{{end}}
-\include "bagpipe.ly"
-\include "./bagpipe_extra.ly"
-\include "./header_{{.headerFormat}}.ly"
 
 %% Local tweaks
 \paper {
@@ -252,7 +250,7 @@ func (m *maker) makeTemplateFile(sourceFile string, minimal bool) (string, error
 	}
 	data := map[string]any{
 		"sourceFile":    sourceFile,
-		"version":       "2.24.0",
+		"version":       lowestLilyVersion,
 		"pointAndClick": m.cmd.Bool("point-and-click"),
 		"staffSize":     m.cmd.Int("staff-size"),
 		"paperSize":     m.cmd.String("paper-size"),
@@ -260,11 +258,15 @@ func (m *maker) makeTemplateFile(sourceFile string, minimal bool) (string, error
 		"headerFormat":  format,
 		"viewSpacing":   m.cmd.Bool("view-spacing"),
 		"removeTagline": m.cmd.Bool("crop") || m.cmd.Bool("post"),
-		"fontInclude":   getString("font-include"),
+		"fontInclude":   GetConfig().FontInclude,
+	}
+	common := GetConfig().Template.Common
+	if common != "" {
+		commonExpanded, err := executeTemplate(common, data)
+		errExit(err)
+		common = commonExpanded
 	}
 
-	header, err := executeTemplate(fileHeader, data)
-	errExit(err)
 	source, err := os.ReadFile(sourceFile)
 	errExit(err)
 
@@ -276,8 +278,16 @@ func (m *maker) makeTemplateFile(sourceFile string, minimal bool) (string, error
 	}
 	defer f.Close()
 
-	n, err := f.WriteString(header)
-	if err == nil && n < len(header) {
+	makeTemplate := GetConfig().Template.Make
+	if makeTemplate == "" {
+		makeTemplate = makeHeaderTemplate
+	}
+	data["common"] = common
+	template, err := executeTemplate(makeTemplate, data)
+	errExit(err)
+
+	n, err := f.WriteString(template)
+	if err == nil && n < len(template) {
 		return "", io.ErrShortWrite
 	}
 
