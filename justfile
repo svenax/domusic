@@ -11,13 +11,14 @@ deps:
 
 # Build the project with git version info
 build:
-    go build -ldflags "-X {{base}}.GitSha1={{sha}} -X {{base}}.BuildTime={{now}}"
+    go build -ldflags "-X {{base}}.gitSha1={{sha}} -X {{base}}.buildTime={{now}}"
 
 # Install the project with git version info
 install:
     go clean
-    go install -ldflags "-X {{base}}.GitSha1={{sha}} -X {{base}}.BuildTime={{now}}"
+    go install -ldflags "-X {{base}}.gitSha1={{sha}} -X {{base}}.buildTime={{now}}"
 
 # Test the build by running version command
-test:
-    domusic version
+test: build
+    go test ./...
+    ./domusic version

@@ -10,11 +10,14 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
-const version = "2.1.2"
+const (
+	version           = "2.2.0"
+	lowestLilyVersion = "2.24.0"
+)
 
 var (
-	BuildTime = "unknown"
-	GitSha1   = "dev"
+	buildTime = "unknown"
+	gitSha1   = "dev"
 )
 
 var versionCmd = &cli.Command{
@@ -22,8 +25,10 @@ var versionCmd = &cli.Command{
 	Usage: "Show version of this program and of Lilypond",
 	Action: func(ctx context.Context, cmd *cli.Command) error {
 		// Version command doesn't need config
-		fmt.Printf("domusic v%s (%s) built %s %s/%s\n", version, GitSha1, BuildTime, runtime.GOOS, runtime.GOARCH)
+		fmt.Printf("domusic v%s (%s) built %s %s/%s\n", version, gitSha1, buildTime, runtime.GOOS, runtime.GOARCH)
 		fmt.Println(lilyVersion())
+		fmt.Println("Version cmd:", lowestLilyVersion)
+		fmt.Println("Config path:", configPath)
 		return nil
 	},
 }
