@@ -94,17 +94,18 @@ func (s *syncer) run() error {
 }
 
 func (s *syncer) validateConfig() error {
-	server := getString("sync-server")
+	config := GetConfig()
+	server := config.Sync.Server
 	if server == "" {
 		return fmt.Errorf("sync-server not configured - please set it in your config file or DOMUSIC_SYNC_SERVER environment variable")
 	}
 
-	user := getString("sync-user")
+	user := config.Sync.User
 	if user == "" {
 		return fmt.Errorf("sync-user not configured - please set it in your config file or DOMUSIC_SYNC_USER environment variable")
 	}
 
-	path := getString("sync-path")
+	path := config.Sync.Path
 	if path == "" {
 		return fmt.Errorf("sync-path not configured - please set it in your config file or DOMUSIC_SYNC_PATH environment variable")
 	}
@@ -113,9 +114,10 @@ func (s *syncer) validateConfig() error {
 }
 
 func (s *syncer) buildDestinationPath() string {
-	user := getString("sync-user")
-	server := getString("sync-server")
-	path := getString("sync-path")
+	config := GetConfig()
+	user := config.Sync.User
+	server := config.Sync.Server
+	path := config.Sync.Path
 
 	return fmt.Sprintf("%s@%s:%s", user, server, path)
 }
@@ -124,9 +126,10 @@ func (s *syncer) buildRsyncArgs(source, dest string) []string {
 	args := []string{
 		"-az", // archive mode, compress
 	}
+	config := GetConfig()
 
 	// Add SSH key if configured
-	if sshKey := getString("sync-ssh-key"); sshKey != "" {
+	if sshKey := config.Sync.SshKey; sshKey != "" {
 		// Expand tilde to home directory if needed
 		if strings.HasPrefix(sshKey, "~/") {
 			home, err := os.UserHomeDir()
@@ -150,7 +153,7 @@ func (s *syncer) buildRsyncArgs(source, dest string) []string {
 	if exclude := s.cmd.String("exclude"); exclude != "" {
 		args = append(args, "--exclude", exclude)
 	}
-	for _, exclude := range getStringSlice("sync-exclude") {
+	for _, exclude := range config.Sync.Exclude {
 		if exclude != "" {
 			args = append(args, "--exclude", exclude)
 		}
@@ -158,7 +161,7 @@ func (s *syncer) buildRsyncArgs(source, dest string) []string {
 	if include := s.cmd.String("include"); include != "" {
 		args = append(args, "--include", include)
 	}
-	for _, include := range getStringSlice("sync-include") {
+	for _, include := range config.Sync.Include {
 		if include != "" {
 			args = append(args, "--include", include)
 		}
