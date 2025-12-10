@@ -26,7 +26,8 @@ func printAndReturnError(format string, args ...any) error {
 
 // printWarning prints a warning message to stderr.
 func printWarning(format string, args ...any) {
-	fmt.Fprintf(os.Stderr, "Warning: "+format+"\n", args...)
+	err := fmt.Errorf(format, args...)
+	fmt.Fprintln(os.Stderr, "Warning:", err)
 }
 
 // getSourcePath returns the full path to a Lilypond file in the music

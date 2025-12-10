@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"runtime"
 
@@ -37,8 +36,8 @@ func Execute() {
 		},
 	}
 
-	if err := app.Run(context.Background(), os.Args); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+	if app.Run(context.Background(), os.Args) != nil {
+		// Error messages are already printed elsewhere
 		os.Exit(1)
 	}
 }
