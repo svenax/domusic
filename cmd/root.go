@@ -37,7 +37,6 @@ func Execute() {
 	}
 
 	if app.Run(context.Background(), os.Args) != nil {
-		// Error messages are already printed elsewhere
 		os.Exit(1)
 	}
 }
