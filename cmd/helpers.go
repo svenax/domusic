@@ -18,8 +18,7 @@ var titleRx = regexp.MustCompile("title\\s*=\\s*\"(.+)\"")
 
 // printWarning prints a warning message to stderr.
 func printWarning(format string, args ...any) {
-	err := fmt.Errorf(format, args...)
-	fmt.Fprintln(os.Stderr, "Warning:", err)
+	fmt.Fprintf(os.Stderr, "Warning: "+format+"\n", args...)
 }
 
 // getSourcePath returns the full path to a Lilypond file in the music
