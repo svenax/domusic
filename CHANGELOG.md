@@ -7,6 +7,16 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2026-05-28
+
+### Added
+
+- Enable Windows build
+
+### Changed
+
+- Simplify error reporting
+
 ## [2.2.0] - 2025-12-09
 
 ### Added
