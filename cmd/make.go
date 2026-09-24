@@ -69,6 +69,10 @@ var makeCmd = &cli.Command{
 			Usage: "crop page to minimal size",
 		},
 		&cli.BoolFlag{
+			Name:  "comment",
+			Usage: "include comment text",
+		},
+		&cli.BoolFlag{
 			Name:  "point-and-click",
 			Usage: "turn on point-and-click",
 		},
@@ -148,6 +152,7 @@ func (m *maker) run(src string) error {
 	// Handle post flag overrides
 	outputType := m.cmd.String("type")
 	resolution := m.cmd.Int("resolution")
+	comment := m.cmd.Bool("comment")
 	if m.cmd.Bool("post") {
 		outputType = "png"
 		if resolution == 144 { // default resolution
@@ -160,7 +165,7 @@ func (m *maker) run(src string) error {
 		err = m.preview(src, resolution)
 		if err == nil {
 			fmt.Println("  * Creating PDF file")
-			err = m.pdf(src)
+			err = m.pdf(src, comment)
 		}
 	} else {
 		fmt.Println("  * Creating PNG file")
@@ -201,15 +206,19 @@ func (m *maker) preview(src string, resolution int) error {
 		"-dno-print-pages",
 		fmt.Sprintf("-dresolution=%d", resolution),
 		"-dpreview-include-book-title",
-		"-dwithout-comment",
 	}
 
 	return m.runLilypond(src, lyArgs, true)
 }
 
-func (m *maker) pdf(src string) error {
+func (m *maker) pdf(src string, comment bool) error {
+	commentFlag := ""
+	if comment {
+		commentFlag = "-dcomment"
+	}
 	lyArgs := []string{
 		"--pdf",
+		commentFlag,
 	}
 
 	return m.runLilypond(src, lyArgs, false)

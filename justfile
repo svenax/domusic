@@ -21,7 +21,9 @@ win-build:
 # Install the project with git version info
 install:
     go clean
-    go install -ldflags "{{flags}}"
+    GOBIN="$(go env GOPATH)/bin" go install -ldflags "{{flags}}"
+    @echo "Installed domusic to $(go env GOPATH)/bin/domusic"
+    @if [ -n "$(go env GOBIN)" ] && [ "$(go env GOBIN)" != "$(go env GOPATH)/bin" ]; then GOBIN="$(go env GOBIN)" go install -ldflags "{{flags}}" && echo "Also installed domusic to $(go env GOBIN)/domusic"; fi
 
 # Test the build by running version command
 test: build

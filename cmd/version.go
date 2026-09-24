@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	version           = "2.3.0"
+	version           = "2.4.1"
 	lowestLilyVersion = "2.24.0"
 )
 
